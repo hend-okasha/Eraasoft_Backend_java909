@@ -55,20 +55,26 @@ public class EWalletServiceImpl implements ApplicationService {
     }
 
     private void login(){
-        Account account= getAccount(true);
+        int counter = 0;
 
-        if (Objects.isNull(account)){
-            return;
+        while (counter < 4){
+            Account account= getAccount(true);
+
+            if (Objects.isNull(account)){
+                counter++;
+                continue;
+            }
+            boolean loginSuccess = accountService.getAccountByUsernameAndPassword(account);
+            if (loginSuccess){
+                System.out.println(" successful login...");
+                profile(account);
+                return;
+            }else {
+                System.out.println("invalid username or password...");
+                counter++;
+            }
         }
-        boolean loginSuccess = accountService.getAccountByUsernameAndPassword(account);
-        if (loginSuccess){
-            System.out.println(" successful login...");
-            profile(account);
-        }else {
-            System.out.println("invalid username or password...");
-        }
-
-
+        System.out.println("Maximum login attempts reached.");
     }
 
     private void signup(){
@@ -183,7 +189,7 @@ public class EWalletServiceImpl implements ApplicationService {
 
        while (true){
            System.out.println("------------Available services--------------");
-           System.out.println("1.deposit      2.withdraw          3.show account details     4.logout");
+           System.out.println("1.deposit      2.withdraw        3.Transfer       4.show account details          5.Change password       6.logout");
            Scanner scanner= new Scanner(System.in);
            System.out.println("please give me a service you want to apply:");
            int result = scanner.nextInt();
@@ -196,9 +202,15 @@ public class EWalletServiceImpl implements ApplicationService {
                    withdraw(account);
                    break;
                case 3:
-                   showAccountDetails(account);
+                   transfer(account);
                    break;
                case 4:
+                   showAccountDetails(account);
+                   break;
+               case 5:
+                   changePassword(account);
+                   break;
+               case 6:
                    System.out.println("have a nice day :)");
                    logout = true;
                    break;
@@ -218,6 +230,66 @@ public class EWalletServiceImpl implements ApplicationService {
 
     }
 
+    private void changePassword(Account account){
+        Scanner scanner =  new Scanner(System.in);
+
+        System.out.println("Enter old password : ");
+        String oldPassword = scanner.nextLine();
+
+        System.out.println("Enter new password : ");
+        String newPassword = scanner.nextLine();
+
+        AccountResult changePasswordSuccess = accountService.changePassword(account, oldPassword, newPassword);
+
+        Integer error = changePasswordSuccess.getError();
+
+        if (error == 1){
+            System.out.println("Account not found");
+        } else if (error == 2){
+            System.out.println("Old password is incorrect");
+        } else if (error == 3){
+            System.out.println("New password format is invalid");
+        } else if (error == 4){
+            System.out.println("New password cannot be same as old password");
+        } else if (error == 5){
+            System.out.println("Password changed successfully ");
+        }
+
+
+    }
+
+    private void transfer(Account sender){
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Enter destination username:");
+        String receiverUsername = scanner.nextLine();
+
+        System.out.println("Enter amount to transfer:");
+        double amount = scanner.nextDouble();
+
+        Account receiver = new Account(receiverUsername);
+
+        AccountResult transferSuccess = accountService.transfer(sender, receiver, amount );
+
+        Integer error = transferSuccess.getError();
+
+        if (error == 6) {
+            System.out.println("Transfer successful");
+            System.out.println("Your new balance: " + transferSuccess.getAmount());
+        } else if (error == 1) {
+            System.out.println("Sender account not found");
+        } else if (error == 2) {
+            System.out.println("Receiver account not found");
+        } else if (error == 3) {
+            System.out.println("You cannot transfer to yourself");
+        } else if (error == 4) {
+            System.out.println("Invalid amount");
+        } else if (error == 5) {
+            System.out.println("Insufficient balance");
+        }
+
+    }
+
     private void showAccountDetails(Account account) {
         Account accountExist = accountService.getAccountByUsername(account);
 
@@ -226,7 +298,7 @@ public class EWalletServiceImpl implements ApplicationService {
             return;
         }
 
-        System.out.println(account);
+        System.out.println(accountExist);
 
     }
 
@@ -265,7 +337,5 @@ public class EWalletServiceImpl implements ApplicationService {
         } else if (error == 1) {
             System.out.println("account not exist");
         }
-
-
     }
 }

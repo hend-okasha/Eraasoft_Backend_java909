@@ -4,6 +4,7 @@ import helper.AccountResult;
 import model.Account;
 import model.EWalletSystem;
 import service.AccountService;
+import service.AccountValidationService;
 
 import java.util.Optional;
 
@@ -102,6 +103,80 @@ public class AccountServiceImpl implements AccountService {
         accountWithdraw.setBalance(accountWithdraw.getBalance() - amount);
         return new AccountResult(4, accountWithdraw.getBalance() );
     }
+
+    @Override
+    public AccountResult transfer(Account sender, Account receiver, double amount) {
+        Optional<Account> senderOptionalAccount = eWalletSystem.getAccounts().stream()
+                .filter(acc -> acc.getUserName().equals(sender.getUserName())).findFirst();
+
+        if (senderOptionalAccount.isEmpty()) {
+            return new AccountResult(1);
+        }
+
+        Optional<Account> receiverOptionalAccount = eWalletSystem.getAccounts().stream()
+                .filter(acc -> acc.getUserName().equals(receiver.getUserName())).findFirst();
+
+        if (receiverOptionalAccount.isEmpty()) {
+            return new AccountResult(2);
+        }
+
+        Account senderAccount = senderOptionalAccount.get();
+        Account receiverAccount = receiverOptionalAccount.get();
+
+        if (senderAccount.getUserName()
+                .equals(receiverAccount.getUserName())){
+            return new AccountResult(3);
+        }
+
+        if (amount <= 100) {
+            return new AccountResult(4);
+        }
+
+        if (senderAccount.getBalance() < amount){
+            return new AccountResult(5);
+        }
+
+        senderAccount.setBalance(
+                senderAccount.getBalance() - amount
+        );
+
+        receiverAccount.setBalance(
+                receiverAccount.getBalance() + amount
+        );
+
+        return new AccountResult(6, senderAccount.getBalance());
+    }
+
+    @Override
+    public AccountResult changePassword(Account account, String oldPassword, String newPassword) {
+        Optional<Account> optionalAccount = getOptionalAccountByUsername(account);
+
+        if (optionalAccount.isEmpty()) {
+            return new AccountResult(1);
+        }
+
+        Account accountChangePassword = optionalAccount.get();
+
+        if (!accountChangePassword.getPassword().equals(oldPassword)){
+            return new AccountResult(2);
+        }
+
+        AccountValidationService validation = new AccountValidationServiceImpl();
+
+        Integer passwordError = validation.validatePassword(newPassword);
+
+        if (passwordError != 6){
+            return new AccountResult(3);
+        }
+
+        if (oldPassword.equals(newPassword)){
+            return new AccountResult(4);
+        }
+
+        accountChangePassword.setPassword(newPassword);
+        return new AccountResult(5);
+    }
+
 
     /**
      *

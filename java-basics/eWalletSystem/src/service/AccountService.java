@@ -12,6 +12,8 @@ public interface AccountService {
 
     AccountResult deposit(Account account, double amount);
     AccountResult withdraw(Account account, double amount);
+    AccountResult transfer(Account sender, Account receiver, double amount);
+    AccountResult changePassword(Account account, String oldPassword, String newPassword);
 
 
 }
