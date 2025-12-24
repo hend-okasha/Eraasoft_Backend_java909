@@ -5,14 +5,18 @@ import java.util.List;
 
 public class EWalletSystem {
 
+    private static EWalletSystem eWalletSystem;
     private final String name = "Eraasoft E Wallet System";
     private List<Account> accounts = new ArrayList<>();
 
-    public EWalletSystem() {
+    private EWalletSystem() {
     }
 
-    public EWalletSystem(List<Account> accounts) {
-        this.accounts = accounts;
+    public static synchronized EWalletSystem getInstance() {
+        if (eWalletSystem == null) {
+            eWalletSystem = new EWalletSystem();
+        }
+        return eWalletSystem;
     }
 
     public String getName() {
@@ -21,9 +25,5 @@ public class EWalletSystem {
 
     public List<Account> getAccounts() {
         return accounts;
-    }
-
-    public void setAccounts(List<Account> accounts) {
-        this.accounts = accounts;
     }
 }

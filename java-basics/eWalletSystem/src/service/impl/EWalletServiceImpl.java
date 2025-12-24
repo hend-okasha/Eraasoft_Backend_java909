@@ -1,341 +1,269 @@
 package service.impl;
 
-import helper.AccountResult;
+import exception.*;
+import helper.UserInputValidator;
 import model.Account;
 import service.AccountService;
 import service.AccountValidationService;
 import service.ApplicationService;
 
-import java.util.Objects;
 import java.util.Scanner;
 
 public class EWalletServiceImpl implements ApplicationService {
 
     private AccountService accountService = new AccountServiceImpl();
-
     private AccountValidationService accountValidationService = new AccountValidationServiceImpl();
+    private Scanner scanner = new Scanner(System.in);
+    private UserInputValidator validator;
+
+    public EWalletServiceImpl() {
+        this.validator = new UserInputValidator(scanner, accountService, accountValidationService);
+    }
 
     @Override
     public void startApp() {
-        System.out.println("welcome to EraaSoft EWallet system");
-        boolean isExit = false;
-        int counter = 0;
+        System.out.println("Welcome to EraaSoft EWallet System");
+        int invalidAttempts = 0;
 
-        while(true) {
-            System.out.println(" please enter your service:");
-            System.out.println("1: login           2: signup              3: Exit");
-            Scanner scanner = new Scanner(System.in);
-            int service = scanner.nextInt();
+        while (true) {
+            try {
+                System.out.println("\nPlease select your service:");
+                System.out.println("1: Login    2: Signup    3: Exit");
 
-            switch (service) {
-                case 1:
-                    login();
-                    break;
-                case 2:
-                    signup();
-                    break;
-                case 3:
-                    System.out.println("have a nice day :)");
-                    isExit = true;
-                    break;
-                default:
-                    System.out.println("invalid choice :(");
-                    counter++;
-                    break;
-            }
-            if (isExit){
-                break;
-            }
+                int service = validator.getIntInput();
 
-            if (counter == 3){
-                System.out.println("please contact with admin ");
-                break;
+                switch (service) {
+                    case 1:
+                        login();
+                        invalidAttempts = 0;
+                        break;
+                    case 2:
+                        signup();
+                        invalidAttempts = 0;
+                        break;
+                    case 3:
+                        System.out.println("Have a nice day :)");
+                        return;
+                    default:
+                        System.out.println("Invalid choice! Please select 1, 2, or 3");
+                        invalidAttempts++;
+                        break;
+                }
+
+                if (invalidAttempts >= 3) {
+                    System.out.println("Too many invalid attempts. Please contact admin.");
+                    break;
+                }
+
+            } catch (Exception e) {
+                System.out.println("An unexpected error occurred: " + e.getMessage());
+                invalidAttempts++;
             }
         }
     }
 
-    private void login(){
-        int counter = 0;
+    private void login() {
+        int attempts = 0;
+        final int MAX_ATTEMPTS = 3;
 
-        while (counter < 4){
-            Account account= getAccount(true);
+        while (attempts < MAX_ATTEMPTS) {
+            try {
+                System.out.println("--- Login ---");
+                System.out.print("Enter your username: ");
+                String username = scanner.nextLine().trim();
 
-            if (Objects.isNull(account)){
-                counter++;
-                continue;
-            }
-            boolean loginSuccess = accountService.getAccountByUsernameAndPassword(account);
-            if (loginSuccess){
-                System.out.println(" successful login...");
-                profile(account);
+                System.out.print("Enter password: ");
+                String password = scanner.nextLine();
+
+                Account account = new Account(username, password);
+                Account loggedInAccount = accountService.login(account);
+
+                System.out.println("Login successful! Welcome " + loggedInAccount.getUserName());
+                profile(loggedInAccount);
                 return;
-            }else {
-                System.out.println("invalid username or password...");
-                counter++;
+
+            } catch (InvalidCredentialsException exception) {
+                attempts++;
+                int remaining = MAX_ATTEMPTS - attempts;
+                System.out.println("Error: " + exception.getMessage());
+                if (remaining > 0) {
+                    System.out.println("Remaining attempts: " + remaining);
+                }
+            } catch (Exception exception) {
+                System.out.println("An error occurred: " + exception.getMessage());
+                attempts++;
             }
         }
-        System.out.println("Maximum login attempts reached.");
+
+        System.out.println("Maximum login attempts reached. Please try again later.");
     }
 
-    private void signup(){
-        Account account= getAccount(false);
+    private void signup() {
+        try {
+            System.out.println("--- Create New Account ---");
 
-        if (Objects.isNull(account)){
-            return;
-        }
+            String username = validator.getValidatedUsername();
+            if (username == null) return;
 
-        boolean isAccountCreated = accountService.createAccount(account);
+            String password = validator.getValidatedPassword();
+            if (password == null) return;
 
-        if (isAccountCreated){
-            System.out.println(" Account created successfully....");
+            String phoneNumber = validator.getValidatedPhoneNumber();
+            if (phoneNumber == null) return;
+
+            String address = validator.getStringInput("Enter address: ");
+
+            float age = validator.getValidatedAge();
+            if (age == -1) return;
+
+            Account account = new Account(username, password, phoneNumber, address, age);
+            accountService.createAccount(account);
+
+            System.out.println("Account created successfully!");
             profile(account);
-        } else {
-            System.out.println(" Account already exist with same username " + account.getUserName());
+
+        } catch (DuplicateAccountException exception) {
+            System.out.println("Error: " + exception.getMessage());
+        } catch (Exception exception) {
+            System.out.println("An unexpected error occurred during signup: " + exception.getMessage());
         }
     }
 
-    private Account getAccount(boolean login){
-        Scanner scanner = new Scanner(System.in);
+    private void profile(Account account) {
+        int invalidAttempts = 0;
 
-        System.out.println("Enter your username : ");
-        String userName = scanner.nextLine();
+        while (true) {
+            try {
+                System.out.println("------------ Available Services --------------");
+                System.out.println("1. Deposit");
+                System.out.println("2. Withdraw");
+                System.out.println("3. Transfer");
+                System.out.println("4. Show Account Details");
+                System.out.println("5. Change Password");
+                System.out.println("6. Logout");
+                System.out.print("Select service: ");
 
-        if (!login) {
-            if (!accountService.isUsernameUnique(userName)) {
-                System.out.println("this username already exist");
-                return null;
+                int choice = validator.getIntInput();
+
+                switch (choice) {
+                    case 1:
+                        deposit(account);
+                        invalidAttempts = 0;
+                        break;
+                    case 2:
+                        withdraw(account);
+                        invalidAttempts = 0;
+                        break;
+                    case 3:
+                        transfer(account);
+                        invalidAttempts = 0;
+                        break;
+                    case 4:
+                        showAccountDetails(account);
+                        invalidAttempts = 0;
+                        break;
+                    case 5:
+                        changePassword(account);
+                        invalidAttempts = 0;
+                        break;
+                    case 6:
+                        System.out.println("Logged out successfully. Have a nice day :)");
+                        return;
+                    default:
+                        System.out.println("Invalid service selection");
+                        invalidAttempts++;
+                        break;
+                }
+
+                if (invalidAttempts >= 4) {
+                    System.out.println("Too many invalid attempts. Please contact admin.");
+                    break;
+                }
+
+            } catch (Exception exception) {
+                System.out.println("An error occurred: " + exception.getMessage());
+                invalidAttempts++;
             }
-        } else {
-            if (accountService.isUsernameUnique(userName)) {
-                System.out.println("username not found");
-                return null;
-            }
-        }
-
-        Integer usernameError = accountValidationService.validateUserName(userName);
-
-        if (usernameError == 2) {
-            System.out.println("first letter must be capital");
-            return null;
-        } else if (usernameError == 1) {
-            System.out.println("username must be greater than 3 letters");
-            return null;
-        }
-
-        System.out.print("Enter password: ");
-        String password = scanner.nextLine();
-        Integer passwordError = accountValidationService.validatePassword(password);
-
-        if (passwordError == 1) {
-            System.out.println("password must be at least 8 characters");
-            return null;
-        } else if (passwordError == 2) {
-            System.out.println("password must contain uppercase letter");
-            return null;
-        } else if (passwordError == 3) {
-            System.out.println("password must contain lowercase letter");
-            return null;
-        } else if (passwordError == 4) {
-            System.out.println("password must contain digit");
-            return null;
-        } else if (passwordError == 5) {
-            System.out.println("password must contain special character");
-            return null;
-        }
-
-        if (login){
-            return new Account(userName,password);
-        }
-
-        System.out.print("Enter phone number: ");
-        String phoneNumber = scanner.nextLine();
-
-        Integer phoneError = accountValidationService.validatePhoneNumber(phoneNumber);
-
-        if (phoneError == 1) {
-            System.out.println("phone number must be 11 digits");
-            return null;
-        } else if (phoneError == 2) {
-            System.out.println("phone number must contain digits only");
-            return null;
-        } else if (phoneError == 3) {
-            System.out.println("phone number must start with 01");
-            return null;
-        } else if (phoneError == 4) {
-            System.out.println("invalid Egyptian mobile operator");
-            return null;
-        }
-        if (accountService.isPhoneNumberExists(phoneNumber)) {
-            System.out.println("phone number already exists");
-            return null;
-        }
-
-        System.out.print("Enter address: ");
-        String address = scanner.nextLine();
-
-        System.out.print("Enter age: ");
-        float age = scanner.nextFloat();
-        if (age < 18){
-            System.out.println("under 18 not allowed");
-            return null;
-        }
-
-        return new Account(userName, password, phoneNumber, address, age);
-    }
-
-    private void profile(Account account){
-        boolean logout = false;
-        int counter = 0;
-
-       while (true){
-           System.out.println("------------Available services--------------");
-           System.out.println("1.deposit      2.withdraw        3.Transfer       4.show account details          5.Change password       6.logout");
-           Scanner scanner= new Scanner(System.in);
-           System.out.println("please give me a service you want to apply:");
-           int result = scanner.nextInt();
-
-           switch (result){
-               case 1:
-                   deposit(account);
-                   break;
-               case 2:
-                   withdraw(account);
-                   break;
-               case 3:
-                   transfer(account);
-                   break;
-               case 4:
-                   showAccountDetails(account);
-                   break;
-               case 5:
-                   changePassword(account);
-                   break;
-               case 6:
-                   System.out.println("have a nice day :)");
-                   logout = true;
-                   break;
-               default:
-                   System.out.println("invalid service");
-                   counter ++;
-           }
-           if (logout){
-               break;
-           }
-
-           if (counter == 4){
-               System.out.println("please contact with admin...");
-               break;
-           }
-       }
-
-    }
-
-    private void changePassword(Account account){
-        Scanner scanner =  new Scanner(System.in);
-
-        System.out.println("Enter old password : ");
-        String oldPassword = scanner.nextLine();
-
-        System.out.println("Enter new password : ");
-        String newPassword = scanner.nextLine();
-
-        AccountResult changePasswordSuccess = accountService.changePassword(account, oldPassword, newPassword);
-
-        Integer error = changePasswordSuccess.getError();
-
-        if (error == 1){
-            System.out.println("Account not found");
-        } else if (error == 2){
-            System.out.println("Old password is incorrect");
-        } else if (error == 3){
-            System.out.println("New password format is invalid");
-        } else if (error == 4){
-            System.out.println("New password cannot be same as old password");
-        } else if (error == 5){
-            System.out.println("Password changed successfully ");
-        }
-
-
-    }
-
-    private void transfer(Account sender){
-        Scanner scanner = new Scanner(System.in);
-
-        System.out.println("Enter destination username:");
-        String receiverUsername = scanner.nextLine();
-
-        System.out.println("Enter amount to transfer:");
-        double amount = scanner.nextDouble();
-
-        Account receiver = new Account(receiverUsername);
-
-        AccountResult transferSuccess = accountService.transfer(sender, receiver, amount );
-
-        Integer error = transferSuccess.getError();
-
-        if (error == 6) {
-            System.out.println("Transfer successful");
-            System.out.println("Your new balance: " + transferSuccess.getAmount());
-        } else if (error == 1) {
-            System.out.println("Sender account not found");
-        } else if (error == 2) {
-            System.out.println("Receiver account not found");
-        } else if (error == 3) {
-            System.out.println("You cannot transfer to yourself");
-        } else if (error == 4) {
-            System.out.println("Invalid amount");
-        } else if (error == 5) {
-            System.out.println("Insufficient balance");
-        }
-
-    }
-
-    private void showAccountDetails(Account account) {
-        Account accountExist = accountService.getAccountByUsername(account);
-
-        if (Objects.isNull(accountExist)){
-            System.out.println(" Account not found");
-            return;
-        }
-
-        System.out.println(accountExist);
-
-    }
-
-    private void withdraw(Account account) {
-
-        System.out.println("please enter amount you need to withdraw:");
-        Scanner scanner = new Scanner(System.in);
-        double amount = scanner.nextDouble();
-
-        AccountResult withdrawSuccess = accountService.withdraw(account , amount);
-
-        Integer error = withdrawSuccess.getError();
-        if (error== 4){
-            System.out.println(" withdraw success your balance : " + withdrawSuccess.getAmount());
-        } else if (error == 3) {
-            System.out.println("amount you need to withdraw must be greater than your balance");
-        } else if (error == 2) {
-            System.out.println("amount must be greater than 100");
-        } else if (error == 1) {
-            System.out.println("account not exist :(");
         }
     }
 
     private void deposit(Account account) {
-        System.out.println("please enter amount you need to deposit:");
-        Scanner scanner = new Scanner(System.in);
-        double amount = scanner.nextDouble();
+        try {
+            System.out.print("Enter amount to deposit: ");
+            double amount = validator.getDoubleInput();
 
-        AccountResult depositSuccess = accountService.deposit(account , amount);
+            accountService.deposit(account, amount);
 
-        Integer error = depositSuccess.getError();
-        if (error == 3){
-            System.out.println(" deposit success your balance :" + depositSuccess.getAmount());
-        } else if (error == 2) {
-            System.out.println("amount must be greater than 100");
-        } else if (error == 1) {
-            System.out.println("account not exist");
+            Account updatedAccount = accountService.getAccountByUsername(account);
+            System.out.println("Deposit successful! New balance: " + updatedAccount.getBalance() + " EGP");
+
+        } catch (AccountNotFoundException | InvalidAmountException exception) {
+            System.out.println("Error: " + exception.getMessage());
+        } catch (Exception e) {
+            System.out.println("An unexpected error occurred: " + e.getMessage());
+        }
+    }
+
+    private void withdraw(Account account) {
+        try {
+            System.out.print("Enter amount to withdraw: ");
+            double amount = validator.getDoubleInput();
+
+            accountService.withdraw(account, amount);
+
+            Account updatedAccount = accountService.getAccountByUsername(account);
+            System.out.println("Withdrawal successful! New balance: " + updatedAccount.getBalance() + " EGP");
+
+        } catch (AccountNotFoundException | InvalidAmountException | InsufficientBalanceException exception) {
+            System.out.println("Error: " + exception.getMessage());
+        } catch (Exception exception) {
+            System.out.println("An unexpected error occurred: " + exception.getMessage());
+        }
+    }
+
+    private void transfer(Account sender) {
+        try {
+            String receiverUsername = validator.getStringInput("Enter destination username: ");
+
+            System.out.print("Enter amount to transfer: ");
+            double amount = validator.getDoubleInput();
+
+            Account receiver = new Account(receiverUsername);
+            accountService.transfer(sender, receiver, amount);
+
+            Account updatedAccount = accountService.getAccountByUsername(sender);
+            System.out.println("Transfer successful! New balance: " + updatedAccount.getBalance() + " EGP");
+
+        } catch (AccountNotFoundException | InvalidAmountException | InsufficientBalanceException | SelfTransferException exception) {
+            System.out.println("Error: " + exception.getMessage());
+        } catch (Exception exception) {
+            System.out.println("An unexpected error occurred: " + exception.getMessage());
+        }
+    }
+
+    private void changePassword(Account account) {
+        try {
+            String oldPassword = validator.getStringInput("Enter old password: ");
+            String newPassword = validator.getStringInput("Enter new password: ");
+
+            accountService.changePassword(account, oldPassword, newPassword);
+            System.out.println("Password changed successfully!");
+
+        } catch (AccountNotFoundException | InvalidCredentialsException | ValidationException exception) {
+            System.out.println("Error: " + exception.getMessage());
+        } catch (Exception exception) {
+            System.out.println("An unexpected error occurred: " + exception.getMessage());
+        }
+    }
+
+    private void showAccountDetails(Account account) {
+        try {
+            Account accountDetails = accountService.getAccountByUsername(account);
+            System.out.println(accountDetails);
+        } catch (AccountNotFoundException exception) {
+            System.out.println("Error: " + exception.getMessage());
+        } catch (Exception exception) {
+            System.out.println("An unexpected error occurred: " + exception.getMessage());
         }
     }
 }

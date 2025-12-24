@@ -1,19 +1,32 @@
 package service;
 
-import helper.AccountResult;
+import exception.*;
 import model.Account;
 
 public interface AccountService {
-    boolean createAccount(Account account);
-    boolean getAccountByUsernameAndPassword(Account account);
-    Account getAccountByUsername(Account account);
-    boolean isUsernameUnique (String username);
+    void createAccount(Account account)
+            throws DuplicateAccountException;
+
+    Account login(Account account)
+            throws InvalidCredentialsException;
+
+    Account getAccountByUsername(Account account)
+            throws AccountNotFoundException;
+
+    boolean isUsernameUnique(String username);
+
     boolean isPhoneNumberExists(String phoneNumber);
 
-    AccountResult deposit(Account account, double amount);
-    AccountResult withdraw(Account account, double amount);
-    AccountResult transfer(Account sender, Account receiver, double amount);
-    AccountResult changePassword(Account account, String oldPassword, String newPassword);
+    void deposit(Account account, double amount)
+            throws AccountNotFoundException, InvalidAmountException;
 
+    void withdraw(Account account, double amount)
+            throws AccountNotFoundException, InvalidAmountException, InsufficientBalanceException;
 
+    void transfer(Account sender, Account receiver, double amount)
+            throws AccountNotFoundException, InvalidAmountException,
+            InsufficientBalanceException, SelfTransferException;
+
+    void changePassword(Account account, String oldPassword, String newPassword)
+            throws AccountNotFoundException, InvalidCredentialsException, ValidationException;
 }
