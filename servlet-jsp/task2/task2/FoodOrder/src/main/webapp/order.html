@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Order Food</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .form-container {
+        background: #ffffff;
+        padding: 35px 40px;
+        border-radius: 15px;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+    }
+
+    h2 {
+        text-align: center;
+        color: #667eea;
+        margin-bottom: 25px;
+    }
+
+    label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #333;
+    }
+
+    input[type="text"] {
+        width: 100%;
+        padding: 12px 15px;
+        border-radius: 8px;
+        border: 2px solid #e0e0e0;
+        font-size: 14px;
+        margin-bottom: 20px;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    input[type="text"]:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+    }
+
+    input[type="submit"] {
+        width: 100%;
+        padding: 13px;
+        border: none;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    input[type="submit"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+</style>
+
+</head>
+<body>
+
+<div class="form-container">
+    <h2>Order Food</h2>
+
+    <form action="savedOrders.jsp">
+        <label>Write Order:</label>
+        <input type="text" name="order" placeholder="Enter your order" >
+        <input type="submit" value="Submit">
+    </form>
+</div>
+
+</body>
+</html>
