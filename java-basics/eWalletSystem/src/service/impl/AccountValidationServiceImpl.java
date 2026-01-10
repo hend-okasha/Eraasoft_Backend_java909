@@ -61,7 +61,7 @@ public class AccountValidationServiceImpl implements AccountValidationService {
             }
         }
 
-        if (phoneNumber.charAt(0) != '0' ||phoneNumber.charAt(1) != '1'){
+        if (phoneNumber.charAt(0) != '0' || phoneNumber.charAt(1) != '1'){
             return 3;
         }
 

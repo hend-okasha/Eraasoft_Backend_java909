@@ -3,10 +3,13 @@ package service.impl;
 import exception.*;
 import helper.UserInputValidator;
 import model.Account;
+import model.History;
 import service.AccountService;
 import service.AccountValidationService;
 import service.ApplicationService;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class EWalletServiceImpl implements ApplicationService {
@@ -131,6 +134,7 @@ public class EWalletServiceImpl implements ApplicationService {
 
     private void profile(Account account) {
         int invalidAttempts = 0;
+        boolean isAdmin = accountService.isAdmin(account);
 
         while (true) {
             try {
@@ -140,7 +144,17 @@ public class EWalletServiceImpl implements ApplicationService {
                 System.out.println("3. Transfer");
                 System.out.println("4. Show Account Details");
                 System.out.println("5. Change Password");
-                System.out.println("6. Logout");
+                System.out.println("6. View History");
+                System.out.println("7. Logout");
+
+                if (isAdmin) {
+                    System.out.println("         ADMIN FEATURES                    ");
+                    System.out.println("  8. View All Accounts                      ");
+                    System.out.println("  9. Delete Account                         ");
+                    System.out.println("  10. Inactivate Account                    ");
+                    System.out.println("  11. Activate Account                      ");
+                    System.out.println("  12. View System History                   ");
+                }
                 System.out.print("Select service: ");
 
                 int choice = validator.getIntInput();
@@ -167,8 +181,58 @@ public class EWalletServiceImpl implements ApplicationService {
                         invalidAttempts = 0;
                         break;
                     case 6:
+                        showAccountHistory(account);
+                        invalidAttempts = 0;
+                        break;
+                    case 7:
                         System.out.println("Logged out successfully. Have a nice day :)");
                         return;
+
+                    case 8:
+                        if (isAdmin) {
+                            viewAllAccounts();
+                            invalidAttempts = 0;
+                        } else {
+                            System.out.println("Invalid service selection");
+                            invalidAttempts++;
+                        }
+                        break;
+                    case 9:
+                        if (isAdmin) {
+                            deleteAccountByAdmin(account);
+                            invalidAttempts = 0;
+                        } else {
+                            System.out.println("Invalid service selection");
+                            invalidAttempts++;
+                        }
+                        break;
+                    case 10:
+                        if (isAdmin) {
+                            inactivateAccountByAdmin(account);
+                            invalidAttempts = 0;
+                        } else {
+                            System.out.println("Invalid service selection");
+                            invalidAttempts++;
+                        }
+                        break;
+                    case 11:
+                        if (isAdmin) {
+                            activateAccountByAdmin(account);
+                            invalidAttempts = 0;
+                        } else {
+                            System.out.println("Invalid service selection");
+                            invalidAttempts++;
+                        }
+                        break;
+                    case 12:
+                        if (isAdmin) {
+                            viewSystemHistory();
+                            invalidAttempts = 0;
+                        } else {
+                            System.out.println("Invalid service selection");
+                            invalidAttempts++;
+                        }
+                        break;
                     default:
                         System.out.println("Invalid service selection");
                         invalidAttempts++;
@@ -199,8 +263,8 @@ public class EWalletServiceImpl implements ApplicationService {
 
         } catch (AccountNotFoundException | InvalidAmountException exception) {
             System.out.println("Error: " + exception.getMessage());
-        } catch (Exception e) {
-            System.out.println("An unexpected error occurred: " + e.getMessage());
+        } catch (Exception exception) {
+            System.out.println("An unexpected error occurred: " + exception.getMessage());
         }
     }
 
@@ -264,6 +328,129 @@ public class EWalletServiceImpl implements ApplicationService {
             System.out.println("Error: " + exception.getMessage());
         } catch (Exception exception) {
             System.out.println("An unexpected error occurred: " + exception.getMessage());
+        }
+    }
+
+    private void showAccountHistory(Account account){
+        try{
+            Account accountHistory = accountService.getAccountByUsername(account);
+
+            if (accountHistory.getHistory().isEmpty()){
+                System.out.println("NO Transactions yet");
+            }
+
+            for (History history : accountHistory.getHistory()){
+                System.out.println(history);
+            }
+
+        }catch (AccountNotFoundException exception) {
+            System.out.println("Error: " + exception.getMessage());
+        } catch (Exception exception) {
+            System.out.println("An unexpected error occurred: " + exception.getMessage());
+        }
+    }
+
+    private void viewAllAccounts() {
+        List<Account> allAccounts = accountService.getAllAccounts();
+
+        System.out.println("\n╔════════════════════════════════════════════════════════════════════════════╗");
+        System.out.println("║                          ALL ACCOUNTS IN SYSTEM                            ║");
+        System.out.println("╠════════════════════════════════════════════════════════════════════════════╣");
+
+        if (allAccounts.isEmpty()) {
+            System.out.println("║  No accounts found.                                                        ║");
+        } else {
+            System.out.println("║  Total Accounts: " + allAccounts.size());
+            System.out.println("╠════════════════════════════════════════════════════════════════════════════╣");
+
+            for (int i = 0; i < allAccounts.size(); i++) {
+                Account acc = allAccounts.get(i);
+
+                System.out.println("║  Account #" + (i + 1));
+                System.out.println("║    Username    : " + acc.getUserName());
+                System.out.println("║    Balance     : " + acc.getBalance() + " EGP");
+                System.out.println("║    Phone       : " + (acc.getPhoneNumber() != null ? acc.getPhoneNumber() : "N/A"));
+                System.out.println("║    Status      : " + (acc.isActive() ? "Active" : "Inactive"));
+                System.out.println("║    Role        : " + (acc.isAdmin() ? "Admin" : "User"));
+                System.out.println("╠════════════════════════════════════════════════════════════════════════════╣");
+            }
+        }
+
+        System.out.println("╚════════════════════════════════════════════════════════════════════════════╝\n");
+    }
+
+    private void deleteAccountByAdmin(Account admin) {
+        try {
+            String username = validator.getStringInput("Enter username to delete: ");
+
+            System.out.print("Are you sure you want to delete account '" + username + "'? (yes/no): ");
+            String confirmation = scanner.nextLine().trim().toLowerCase();
+
+            if (confirmation.equals("yes")) {
+                accountService.deleteAccountByAdmin(username, admin);
+                System.out.println("✓ Account '" + username + "' deleted successfully.");
+            } else {
+                System.out.println("Account deletion cancelled.");
+            }
+
+        } catch (AccountNotFoundException exception) {
+            System.out.println("Error: " + exception.getMessage());
+        } catch (Exception exception) {
+            System.out.println("An unexpected error occurred: " + exception.getMessage());
+        }
+    }
+
+    private void inactivateAccountByAdmin(Account admin) {
+        try {
+            String username = validator.getStringInput("Enter username to inactivate: ");
+
+            accountService.inActivateAccount(username, admin);
+            System.out.println("✓ Account '" + username + "' inactivated successfully.");
+
+        } catch (AccountNotFoundException exception) {
+            System.out.println("Error: " + exception.getMessage());
+        } catch (Exception exception) {
+            System.out.println("An unexpected error occurred: " + exception.getMessage());
+        }
+    }
+
+    private void activateAccountByAdmin(Account admin) {
+        try {
+            String username = validator.getStringInput("Enter username to activate: ");
+
+            accountService.activateAccount(username, admin);
+            System.out.println(" Account '" + username + "' activated successfully.");
+
+        } catch (AccountNotFoundException exception) {
+            System.out.println("Error: " + exception.getMessage());
+        } catch (Exception exception) {
+            System.out.println("An unexpected error occurred: " + exception.getMessage());
+        }
+    }
+
+    private void viewSystemHistory() {
+        Map<String, List<History>> systemHistory = accountService.getSystemHistory();
+
+
+        System.out.println(" ------------- SYSTEM HISTORY ---------------");
+
+        if (systemHistory.isEmpty()) {
+            System.out.println(" No history found. ");
+        } else {
+            for (Map.Entry<String, List<History>> entry : systemHistory.entrySet()) {
+                String username = entry.getKey();
+                List<History> histories = entry.getValue();
+
+                System.out.println("  User: " + username);
+
+                if (histories.isEmpty()) {
+                    System.out.println(" No transactions.   ");
+                } else {
+                    for (History history : histories) {
+                        System.out.println(history);
+                    }
+                }
+            }
         }
     }
 }
