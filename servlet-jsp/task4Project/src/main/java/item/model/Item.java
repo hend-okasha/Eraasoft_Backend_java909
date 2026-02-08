@@ -10,7 +10,7 @@ public class Item {
 		
 	}
 	
-	public Item(String name , double price, int totalNUmber) {
+	public Item(String name , double price, int totalNumber) {
 		this.name = name;
 		this.price = price;
 		this.totalNumber = totalNumber;
