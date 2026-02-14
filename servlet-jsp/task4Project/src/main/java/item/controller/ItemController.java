@@ -91,6 +91,8 @@ public class ItemController extends HttpServlet {
 			Long id = Long.parseLong( request.getParameter("id"));
 			Item item = itemService.getItem(id);
 			
+			request.setAttribute("item", item);
+			request.getRequestDispatcher("/item/update-item.jsp").forward(request, response);
 			
 		} catch (Exception exception) {
 			System.out.println("exception =>" + exception.getMessage());
@@ -113,7 +115,7 @@ public class ItemController extends HttpServlet {
 			Boolean isItemUpdated = itemService.updateItem(item);
 			
 			if(isItemUpdated) {
-				
+				showItems(request,response);
 			}
 		} catch (Exception exception) {
 			System.out.println("exception =>" + exception.getMessage());

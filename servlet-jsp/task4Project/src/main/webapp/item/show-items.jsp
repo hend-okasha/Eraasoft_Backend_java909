@@ -36,7 +36,7 @@
             <td><%= item.getPrice()%></td>
             <td><%= item.getTotalNumber()%></td>
             <td>
-                <a>Update</a>
+                <a href="/ItemService/ItemController?action=show-item&id=<%=item.getId()%>">Update</a>
                 <a href="/ItemService/ItemController?action=remove-item&id=<%=item.getId()%>">Delete</a>
             </td>
         </tr>

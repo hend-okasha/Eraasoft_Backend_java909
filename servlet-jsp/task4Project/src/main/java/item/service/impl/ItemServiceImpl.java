@@ -1,6 +1,7 @@
 package item.service.impl;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -24,14 +25,15 @@ public class ItemServiceImpl implements ItemService {
 	@Override
 	public List<Item> getItems() {
 		Connection connection= null;
-		Statement statement = null;
+		PreparedStatement preparedStatement = null;
+		
 		
 		try {
 			connection = dataSource.getConnection();
-			statement = connection.createStatement();
+			String query = "select * from item where deleted= 0";
+			preparedStatement = connection.prepareStatement(query);
 			
-			String query = "select * from item";
-			ResultSet resultSet= statement.executeQuery(query);
+			ResultSet resultSet= preparedStatement.executeQuery(query);
 			
 			List<Item> items = new ArrayList<Item>();
 			while(resultSet.next()){
@@ -56,8 +58,8 @@ public class ItemServiceImpl implements ItemService {
 					connection.close();
 				}
 				
-				if(Objects.nonNull(statement)) {
-					statement.close();
+				if(Objects.nonNull(preparedStatement)) {
+					preparedStatement.close();
 				}
 				
 			} catch (SQLException exception) {
@@ -73,14 +75,15 @@ public class ItemServiceImpl implements ItemService {
 	public Item getItem(Long id) {
 		
 		Connection connection = null;
-		Statement statement = null;
+		PreparedStatement preparedStatement = null;
 		
 		try {
 			connection = dataSource.getConnection();
-			statement = connection.createStatement();
+			String query = "select * from item where id = ? and deleted = 0";
+			preparedStatement = connection.prepareStatement(query);
+			preparedStatement.setLong(1, id);
 			
-			String query = "select * from item where id = " + id;
-			ResultSet resultSet = statement.executeQuery(query);
+			ResultSet resultSet = preparedStatement.executeQuery(query);
 			resultSet.next();
 			
 			Item item = new Item(
@@ -99,8 +102,8 @@ public class ItemServiceImpl implements ItemService {
 					connection.close();
 				}
 				
-				if(Objects.nonNull(statement)) {
-					statement.close();
+				if(Objects.nonNull(preparedStatement)) {
+					preparedStatement.close();
 				}
 				
 			} catch (SQLException exception) {
@@ -115,15 +118,20 @@ public class ItemServiceImpl implements ItemService {
 	@Override
 	public Boolean createItem(Item item) {
 		Connection connection = null;
-		Statement statement = null;
+		PreparedStatement preparedstatement = null;
 		
 		try {
 			connection = dataSource.getConnection();
-			statement = connection.createStatement();
 			
-			String query = "insert into item (name, price, total_number) values('"+
-								item.getName()+"'," +item.getPrice()+", "+ item.getTotalNumber()+")";
-			statement.execute(query);
+			String query = "insert into item (name, price, total_number) values(?, ?, ?)";
+			
+			preparedstatement = connection.prepareStatement(query);
+			
+			preparedstatement.setString(1, item.getName());
+			preparedstatement.setDouble(2, item.getPrice());
+			preparedstatement.setInt(3, item.getTotalNumber());
+			
+			preparedstatement.executeUpdate();
 			
 			return true;
 			
@@ -135,8 +143,8 @@ public class ItemServiceImpl implements ItemService {
 					connection.close();
 				}
 				
-				if(Objects.nonNull(statement)) {
-					statement.close();
+				if(Objects.nonNull(preparedstatement)) {
+					preparedstatement.close();
 				}
 				
 			} catch (SQLException exception) {
@@ -151,16 +159,21 @@ public class ItemServiceImpl implements ItemService {
 	@Override
 	public Boolean updateItem(Item item) {
 		Connection connection = null;
-		Statement statement = null;
+		PreparedStatement preparedstatement = null;
 		
 		try {
 			connection = dataSource.getConnection();
-			statement = connection.createStatement();
+
+			String query = "update item set name = ?, price = ?, total_number = ? WHERE id = ?";
 			
-			String query = "update item set name = '"
-					+item.getName()+"', price = "+item.getPrice()+", total_number = "+item.getTotalNumber()+" where id = "+ item.getId()+"";
+			preparedstatement = connection.prepareStatement(query);
 			
-		    statement.execute(query);
+			preparedstatement.setString(1, item.getName());
+			preparedstatement.setDouble(2, item.getPrice());
+			preparedstatement.setInt(3, item.getTotalNumber());
+			preparedstatement.setLong(4, item.getId());
+			
+			preparedstatement.executeUpdate();
 			
 			return true;
 			
@@ -172,8 +185,8 @@ public class ItemServiceImpl implements ItemService {
 					connection.close();
 				}
 				
-				if(Objects.nonNull(statement)) {
-					statement.close();
+				if(Objects.nonNull(preparedstatement)) {
+					preparedstatement.close();
 				}
 				
 			} catch (SQLException exception) {
@@ -189,17 +202,18 @@ public class ItemServiceImpl implements ItemService {
 	public Boolean removeItem(Long id) {
 		
 		Connection connection = null;
-		Statement statement = null;
+		PreparedStatement preparedstatement = null;
 		
 		try {
 			connection = dataSource.getConnection();
-			statement = connection.createStatement();
 			
-			String query = "delete from item where id = "+id;
+			String query = "UPDATE item SET deleted = 1 WHERE id = ?";
+			preparedstatement = connection.prepareStatement(query);
+			preparedstatement.setLong(1, id);
 			
-		    statement.execute(query);
-			
-			return true;
+			int rowsUpdated = preparedstatement.executeUpdate();
+
+			return rowsUpdated > 0;
 			
 		}catch(Exception exception) {
 			System.out.println("exception" + exception.getMessage());
@@ -209,8 +223,8 @@ public class ItemServiceImpl implements ItemService {
 					connection.close();
 				}
 				
-				if(Objects.nonNull(statement)) {
-					statement.close();
+				if(Objects.nonNull(preparedstatement)) {
+					preparedstatement.close();
 				}
 				
 			} catch (SQLException exception) {
