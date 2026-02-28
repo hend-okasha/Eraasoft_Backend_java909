@@ -3,8 +3,8 @@ package item.model;
 public class Item {
 	private Long id;
 	private String name;
-	private double price;
-	private int totalNumber;
+	private Double price;
+	private Integer totalNumber;
 	
 	public Item() {
 		
@@ -39,19 +39,19 @@ public class Item {
         this.name = name;
     }
 
-    public double getPrice() {
+    public Double getPrice() {
         return price;
     }
 
-    public void setPrice(double price) {
+    public void setPrice(Double price) {
         this.price = price;
     }
 
-    public int getTotalNumber() {
+    public Integer getTotalNumber() {
         return totalNumber;
     }
 
-    public void setTotalNumber(int totalNumber) {
+    public void setTotalNumber(Integer totalNumber) {
         this.totalNumber = totalNumber;
     }
 

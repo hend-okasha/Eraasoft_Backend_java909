@@ -33,7 +33,7 @@ public class ItemServiceImpl implements ItemService {
 			String query = "select * from item where deleted= 0";
 			preparedStatement = connection.prepareStatement(query);
 			
-			ResultSet resultSet= preparedStatement.executeQuery(query);
+			ResultSet resultSet= preparedStatement.executeQuery();
 			
 			List<Item> items = new ArrayList<Item>();
 			while(resultSet.next()){
@@ -50,29 +50,20 @@ public class ItemServiceImpl implements ItemService {
 			return items;
 			 
 		}catch(Exception exception){
+			
 			System.out.println("exception =>" + exception.getMessage());
+			
 		}finally {
 			
-			try {
-				if(Objects.nonNull(connection)) {
-					connection.close();
-				}
-				
-				if(Objects.nonNull(preparedStatement)) {
-					preparedStatement.close();
-				}
-				
-			} catch (SQLException exception) {
-				
-				System.out.println("exception" + exception.getMessage());
-			}
+			closeResources(connection, preparedStatement);
+			
 		}
 		
 		return null;
 	}
 
 	@Override
-	public Item getItem(Long id) {
+	public Item getItemById(Long id) {
 		
 		Connection connection = null;
 		PreparedStatement preparedStatement = null;
@@ -83,7 +74,7 @@ public class ItemServiceImpl implements ItemService {
 			preparedStatement = connection.prepareStatement(query);
 			preparedStatement.setLong(1, id);
 			
-			ResultSet resultSet = preparedStatement.executeQuery(query);
+			ResultSet resultSet = preparedStatement.executeQuery();
 			resultSet.next();
 			
 			Item item = new Item(
@@ -97,19 +88,9 @@ public class ItemServiceImpl implements ItemService {
 		}catch(Exception exception) {
 			System.out.println("exception" + exception.getMessage());
 		}finally {
-			try {
-				if(Objects.nonNull(connection)) {
-					connection.close();
-				}
-				
-				if(Objects.nonNull(preparedStatement)) {
-					preparedStatement.close();
-				}
-				
-			} catch (SQLException exception) {
-				
-				System.out.println("exception" + exception.getMessage());
-			}
+			
+			closeResources(connection, preparedStatement);
+			
 		}
 		
 		return null;
@@ -138,19 +119,8 @@ public class ItemServiceImpl implements ItemService {
 		}catch(Exception exception) {
 			System.out.println("exception" + exception.getMessage());
 		}finally {
-			try {
-				if(Objects.nonNull(connection)) {
-					connection.close();
-				}
-				
-				if(Objects.nonNull(preparedstatement)) {
-					preparedstatement.close();
-				}
-				
-			} catch (SQLException exception) {
-				
-				System.out.println("exception" + exception.getMessage());
-			}
+			
+			closeResources(connection, preparedstatement);
 		}
 		
 		return false;
@@ -180,19 +150,8 @@ public class ItemServiceImpl implements ItemService {
 		}catch(Exception exception) {
 			System.out.println("exception" + exception.getMessage());
 		}finally {
-			try {
-				if(Objects.nonNull(connection)) {
-					connection.close();
-				}
-				
-				if(Objects.nonNull(preparedstatement)) {
-					preparedstatement.close();
-				}
-				
-			} catch (SQLException exception) {
-				
-				System.out.println("exception" + exception.getMessage());
-			}
+			
+			closeResources(connection, preparedstatement);
 		}
 		
 		return false;
@@ -218,22 +177,57 @@ public class ItemServiceImpl implements ItemService {
 		}catch(Exception exception) {
 			System.out.println("exception" + exception.getMessage());
 		}finally {
-			try {
-				if(Objects.nonNull(connection)) {
-					connection.close();
-				}
-				
-				if(Objects.nonNull(preparedstatement)) {
-					preparedstatement.close();
-				}
-				
-			} catch (SQLException exception) {
-				
-				System.out.println("exception" + exception.getMessage());
-			}
+			
+			closeResources(connection, preparedstatement);
 		}
 		
 		return false;
 	}
+
+	@Override
+	public Item getItemByName(String name) {
+		Connection connection = null;
+		PreparedStatement preparedstatement = null;
+		
+		try {
+			connection = dataSource.getConnection();
+			String query = "select * from item where name = ? and deleted = 0";
+			preparedstatement = connection.prepareStatement(query);
+			preparedstatement.setString(1, name);
+			
+			ResultSet resultSet = preparedstatement.executeQuery();
+			
+			if (resultSet.next()) {
+	            Item item = new Item(
+	                resultSet.getLong("id"),
+	                resultSet.getString("name"),
+	                resultSet.getDouble("price"),
+	                resultSet.getInt("total_number")
+	            );
+	            return item;
+	        }
+			
+		}catch(Exception exception) {
+			System.out.println("exception" + exception.getMessage());
+		}finally {
+			
+			closeResources(connection, preparedstatement);
+		}
+		
+		return null;
+	}
+	
+	private void closeResources(Connection connection, PreparedStatement preparedStatement) {
+        try {
+        	
+            if (Objects.nonNull(connection)) connection.close();
+            if (Objects.nonNull(preparedStatement)) preparedStatement.close();
+            
+        } catch (SQLException exception) {
+        	
+        	System.out.println("exception" + exception.getMessage());
+        }
+        
+    }
 
 }

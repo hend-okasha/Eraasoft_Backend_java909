@@ -5,6 +5,8 @@
   <title>ADD Item</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
  <link rel="stylesheet" href="css/add-item.css">
+ 
+ 
 
 </head>
 <body>
@@ -37,11 +39,17 @@
     <input type="hidden" required name="action" value = "add-item">
     <input type="submit" value="Add" class="button">
   </form>
-
+  
   <p class="back">
     <a href="/ItemService/ItemController" >Back To Items</a>
   </p>
 </div>
+
+<script>
+     if (request.getAttribute("message") != null) { 
+        alert('<%= request.getAttribute("message") %>');
+     } 
+</script>
 <!-- partial -->
 
 </body>

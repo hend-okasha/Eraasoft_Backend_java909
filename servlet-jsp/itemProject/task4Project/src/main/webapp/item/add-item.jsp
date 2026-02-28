@@ -10,7 +10,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Update Item</title>
+    <title>Add Item</title>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/item/css/show-items.css">
 </head>
 <body>
@@ -31,7 +31,7 @@
 
     <!-- Header -->
     <div class="form-header">
-        <div class="text">Update Item</div>
+        <div class="text">Add Item</div>
     </div>
 
     <!-- Form -->
@@ -41,12 +41,12 @@
         <div class="form-row">
             <div class="input-data" id="nameGroup">
                 <label for="name">Item Name</label>
-                <input type="text" name="name" id="name" value="${item.name}" placeholder="Item name">
+                <input type="text" name="name" id="name" placeholder="e.g. iPhone 15">
                 <span class="input-error" id="nameError"></span>
             </div>
             <div class="input-data" id="priceGroup">
                 <label for="price">Price ($)</label>
-                <input type="number" name="price" id="price" step="0.01" min="0.01" value="${item.price}" placeholder="Price">
+                <input type="number" name="price" id="price" step="0.01" min="0.01" placeholder="e.g. 999.99">
                 <span class="input-error" id="priceError"></span>
             </div>
         </div>
@@ -54,14 +54,13 @@
         <div class="form-row">
             <div class="input-data" id="totalGroup">
                 <label for="totalNumber">Total Number</label>
-                <input type="number" name="totalNumber" id="totalNumber" min="0" value="${item.totalNumber}" placeholder="Total number">
+                <input type="number" name="totalNumber" id="totalNumber" min="0" placeholder="e.g. 50">
                 <span class="input-error" id="totalError"></span>
             </div>
         </div>
 
-        <input type="hidden" name="id" value="${item.id}">
-        <input type="hidden" name="action" value="update-item">
-        <input type="submit" value="Update Item" class="button">
+        <input type="hidden" name="action" value="add-item">
+        <input type="submit" value="Add Item" class="button">
     </form>
 
     <div class="back">
