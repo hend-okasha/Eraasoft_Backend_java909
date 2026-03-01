@@ -15,7 +15,7 @@
 </head>
 <body>
 
-<!-- Error message (duplicate name) -->
+
 <%
     String message = (String) request.getAttribute("message");
     if (message != null) {
